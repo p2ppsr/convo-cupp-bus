@@ -1,4 +1,4 @@
-const bsv = require('bsv')
+const { createEvent } = require('@cwi/busdriver')
 
 module.exports = {
   busdriver: '0.1.1',
@@ -51,19 +51,22 @@ module.exports = {
         throw new Error('Photo URL does not start with "https:" or "uhrp:"')
       }
 
+      const data = {
+        _id: action.tx.h,
+        userID: action.out[0].s3,
+        primarySigningPub: action.out[0].h4,
+        privilegedSigningPub: action.out[0].h5,
+        timestamp: Number(action.out[0].s6),
+        name: action.out[0].s7,
+        photoURL: action.out[0].s8
+      }
+
       // The new profile record is created
       await state.create({
         collection: 'profiles',
-        data: {
-          _id: action.tx.h,
-          userID: action.out[0].s3,
-          primarySigningPub: action.out[0].h4,
-          privilegedSigningPub: action.out[0].h5,
-          timestamp: Number(action.out[0].s6),
-          name: action.out[0].s7,
-          photoURL: action.out[0].s8
-        }
+        data
       })
+      await createEvent(data)
     } catch (e) {
       console.error(`[!] ${action.tx.h}`)
       console.error(e)
